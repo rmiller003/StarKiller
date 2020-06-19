@@ -39,7 +39,6 @@ for i in range(num_of_enemies):
     # bullet_state = "ready"
 
 # Bullet
-
 # Ready - You can't see the bullet on the screen
 # Fire - The bullet is currently moving
 
