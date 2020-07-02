@@ -2,6 +2,8 @@ import pygame
 import random
 import math
 
+from pygame import mixer
+
 # intialize the pygame
 pygame.init()
 
@@ -10,6 +12,10 @@ screen = pygame.display.set_mode((800, 600))
 
 # Game Background
 background = pygame.image.load('StarBK.png')
+
+# Background Sound
+mixer.music.load('00_Race_Gamer_Soundtrack_136BPM.wav')
+mixer.music.play(-1)
 
 # Title and Icon
 pygame.display.set_caption("Star Killers")
@@ -55,13 +61,23 @@ font = pygame.font.Font('freesansbold.ttf', 33)
 textX = 10
 textY = 10
 
+# Game Over text
+over_font = pygame.font.Font('freesansbold.ttf', 50)
+
 
 def show_score(x, y):
     score = font.render("Score :" + str(score_value), True, (0, 255, 0))
     screen.blit(score, (x, y))
 
+
+def game_over_text():
+    over_text = over_font.render("GAME OVER LOSER!!!", True, (0, 255, 0))
+    screen.blit(over_text, (200, 250))
+
+
 def player(x, y):
     screen.blit(playerImg, (x, y))
+
 
 def enemy(x, y, i):
     screen.blit(enemyImg[i], (x, y))
@@ -117,6 +133,14 @@ while running:
 
     # Enemy Movement
     for i in range(num_of_enemies):
+
+        # Game Over
+        if enemyY[i] > 440:
+            for i in range(num_of_enemies):
+                enemyY[i] = 2000
+            game_over_text()
+            break
+
         enemyX[i] += enemyX_change[i]
         if enemyX[i] <= 0:
             enemyX_change[i] = 3
@@ -128,10 +152,12 @@ while running:
         # Collision
         collision = isCollision(enemyX[i], enemyY[i], bulletX, bulletY)
         if collision:
+            explosion_Sound = mixer.Sound('explosion.wav')
+            explosion_Sound.play()
             bulletY = 480
             bullet_state = "ready"
             score_value += 1
-            enemyX[i] = random.randint(0, 735)
+            enemyX[i] = random.randint(0, 736)
             enemyY[i] = random.randint(50, 150)
 
         enemy(enemyX[i], enemyY[i], i)
@@ -140,6 +166,8 @@ while running:
     if bulletY <= 0:
         bulletY = 480
         bullet_state = "ready"
+        bullet_Sound = mixer.Sound('laser.wav')
+        bullet_Sound.play()
     if bullet_state is "fire":
         fire_bullet(bulletX, bulletY)
         bulletY -= bulletY_change
