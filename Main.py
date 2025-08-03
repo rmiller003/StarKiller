@@ -45,6 +45,7 @@ enemyY = []
 enemyX_change = []
 num_of_enemies = 6
 speed_increase_timer = 600 # 10 seconds at 60 FPS
+speed_increases = 0
 horizontal_passes = 0
 
 # Super Alien
@@ -74,7 +75,12 @@ player_bullets = [] # List to store multiple bullets
 player_bulletY_change = 5
 
 # Enemy Bullet
-enemyBulletImg = pygame.transform.flip(playerBulletImg, False, True)
+enemy_bullet_base_img = pygame.image.load('bullet.png').convert_alpha()
+enemy_bullet_blue_img = pygame.Surface(enemy_bullet_base_img.get_size()).convert_alpha()
+enemy_bullet_blue_img.fill((0,0,255, 255))
+enemy_bullet_img_final = enemy_bullet_base_img.copy()
+enemy_bullet_img_final.blit(enemy_bullet_blue_img, (0,0), special_flags=pygame.BLEND_RGBA_MULT)
+enemyBulletImg = pygame.transform.flip(enemy_bullet_img_final, False, True)
 enemy_bullets = []
 enemy_bulletY_change = 4
 
@@ -95,7 +101,7 @@ restart_font = pygame.font.Font('freesansbold.ttf', 20)
 game_state = "playing"
 
 def reset_game():
-    global playerX, playerY, score_value, player_bullets, enemy_bullets, shield_charges, shield_active, shield_timer, player_lives, next_shield_score, super_alien_active, super_alien_timer, speed_increase_timer, next_life_score, explosions, horizontal_passes, double_shot_unlocked, next_500_point_reward
+    global playerX, playerY, score_value, player_bullets, enemy_bullets, shield_charges, shield_active, shield_timer, player_lives, next_shield_score, super_alien_active, super_alien_timer, speed_increase_timer, next_life_score, explosions, horizontal_passes, double_shot_unlocked, next_500_point_reward, speed_increases
     playerX = (screen_width - player_width) / 2
     playerY = screen_height - 100
     score_value = 0
@@ -113,6 +119,7 @@ def reset_game():
     super_alien_active = False
     super_alien_timer = random.randint(500, 1000)
     speed_increase_timer = 600
+    speed_increases = 0
     horizontal_passes = 0
     for i in range(num_of_enemies):
         enemyX[i] = random.randint(0, screen_width - 64)
@@ -237,13 +244,14 @@ while running:
 
         # Speed Increase Timer
         speed_increase_timer -= 1
-        if speed_increase_timer <= 0:
+        if speed_increase_timer <= 0 and speed_increases < 3:
             for i in range(num_of_enemies):
                 if enemyX_change[i] > 0:
                     enemyX_change[i] += 0.5
                 else:
                     enemyX_change[i] -= 0.5
             speed_increase_timer = 600
+            speed_increases += 1
 
         # Score-based rewards
         if score_value >= next_shield_score:
