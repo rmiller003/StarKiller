@@ -30,6 +30,7 @@ player_width = 64
 playerX = (screen_width - player_width) / 2
 playerY = screen_height - 100
 playerX_change = 0
+player_shields = 3
 
 # Enemy
 enemyImg = []
@@ -52,6 +53,7 @@ enemy_bulletY_change = 4
 # Score
 score_value = 0
 font = pygame.font.Font('freesansbold.ttf', 33)
+shield_font = pygame.font.Font('freesansbold.ttf', 24)
 textX = 10
 textY = 10
 
@@ -62,12 +64,13 @@ restart_font = pygame.font.Font('freesansbold.ttf', 20)
 game_state = "playing"
 
 def reset_game():
-    global playerX, playerY, score_value, player_bullets, enemy_bullets
+    global playerX, playerY, score_value, player_bullets, enemy_bullets, player_shields
     playerX = (screen_width - player_width) / 2
     playerY = screen_height - 100
     score_value = 0
     player_bullets = []
     enemy_bullets = []
+    player_shields = 3
     for i in range(num_of_enemies):
         enemyX[i] = random.randint(0, screen_width - 64)
         enemyY[i] = random.randint(50, 150)
@@ -75,6 +78,10 @@ def reset_game():
 def show_score(x, y):
     score = font.render("Score :" + str(score_value), True, (0, 255, 0))
     screen.blit(score, (x, y))
+
+def show_shields(x, y):
+    shields = shield_font.render("Shields: " + str(player_shields), True, (0, 255, 255))
+    screen.blit(shields, (x, y))
 
 def game_over_text():
     over_text = over_font.render("GAME OVER LOSER!!!", True, (0, 255, 0))
@@ -108,7 +115,7 @@ for i in range(num_of_enemies):
     enemyImg.append(pygame.image.load('alien.png'))
     enemyX.append(random.randint(0, screen_width - 64))
     enemyY.append(random.randint(50, 150))
-    enemyX_change.append(2.94)
+    enemyX_change.append(2.8812)
     enemyY_change.append(40)
 
 # Game Loop
@@ -156,10 +163,10 @@ while running:
 
             enemyX[i] += enemyX_change[i]
             if enemyX[i] <= 0:
-                enemyX_change[i] = 2.94
+                enemyX_change[i] = 2.8812
                 enemyY[i] += enemyY_change[i]
             elif enemyX[i] >= screen_width - 64:
-                enemyX_change[i] = -2.94
+                enemyX_change[i] = -2.8812
                 enemyY[i] += enemyY_change[i]
 
             # Enemy Firing
@@ -198,7 +205,10 @@ while running:
             if isCollision(playerX, playerY, bullet['x'], bullet['y']):
                 explosion_Sound = mixer.Sound('explosion.wav')
                 explosion_Sound.play()
-                game_state = "game_over"
+                enemy_bullets.remove(bullet)
+                player_shields -= 1
+                if player_shields <= 0:
+                    game_state = "game_over"
                 break
 
             if bullet['y'] > screen_height:
@@ -212,6 +222,7 @@ while running:
 
         player(playerX, playerY)
         show_score(textX, textY)
+        show_shields(textX, textY + 40)
 
     elif game_state == "game_over":
         game_over_text()
