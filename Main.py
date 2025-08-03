@@ -19,6 +19,7 @@ background = pygame.transform.scale(background, (screen_width, screen_height))
 # Background Sound
 mixer.music.load('00_Race_Gamer_Soundtrack_136BPM.wav')
 mixer.music.play(-1)
+laser_sound = mixer.Sound('laser.wav')
 
 # Title and Icon
 pygame.display.set_caption("Star Killers")
@@ -36,7 +37,7 @@ shield_charges = 3
 shield_active = False
 shield_timer = 0
 shield_duration = 202 # Shield duration in frames
-double_shot_unlocked = False
+player_double_shot_unlocked = False
 
 # Enemy
 enemyImg = []
@@ -47,6 +48,7 @@ num_of_enemies = 6
 speed_increase_timer = 600 # 10 seconds at 60 FPS
 speed_increases = 0
 horizontal_passes = 0
+alien_double_shot_unlocked = False
 
 # Super Alien
 super_alienImg = pygame.transform.scale(pygame.image.load('ufo.png'), (128, 128))
@@ -89,6 +91,7 @@ score_value = 0
 next_shield_score = 20
 next_life_score = 1000
 next_500_point_reward = 500
+next_1000_point_reward = 1000
 font = pygame.font.Font('freesansbold.ttf', 33)
 ui_font = pygame.font.Font('freesansbold.ttf', 24)
 textX = 10
@@ -101,7 +104,7 @@ restart_font = pygame.font.Font('freesansbold.ttf', 20)
 game_state = "playing"
 
 def reset_game():
-    global playerX, playerY, score_value, player_bullets, enemy_bullets, shield_charges, shield_active, shield_timer, player_lives, next_shield_score, super_alien_active, super_alien_timer, speed_increase_timer, next_life_score, explosions, horizontal_passes, double_shot_unlocked, next_500_point_reward, speed_increases
+    global playerX, playerY, score_value, player_bullets, enemy_bullets, shield_charges, shield_active, shield_timer, player_lives, next_shield_score, super_alien_active, super_alien_timer, speed_increase_timer, next_life_score, explosions, horizontal_passes, player_double_shot_unlocked, next_500_point_reward, speed_increases, alien_double_shot_unlocked, next_1000_point_reward
     playerX = (screen_width - player_width) / 2
     playerY = screen_height - 100
     score_value = 0
@@ -115,7 +118,9 @@ def reset_game():
     next_shield_score = 20
     next_life_score = 1000
     next_500_point_reward = 500
-    double_shot_unlocked = False
+    next_1000_point_reward = 1000
+    player_double_shot_unlocked = False
+    alien_double_shot_unlocked = False
     super_alien_active = False
     super_alien_timer = random.randint(500, 1000)
     speed_increase_timer = 600
@@ -164,7 +169,7 @@ def enemy(x, y, i):
     screen.blit(enemyImg[i], (x, y))
 
 def fire_player_bullet(x, y):
-    if double_shot_unlocked:
+    if player_double_shot_unlocked:
         player_bullets.append({'x': x - 15, 'y': y})
         player_bullets.append({'x': x + 15, 'y': y})
     else:
@@ -172,7 +177,11 @@ def fire_player_bullet(x, y):
 
 
 def fire_enemy_bullet(x, y):
-    enemy_bullets.append({'x': x, 'y': y})
+    if alien_double_shot_unlocked:
+        enemy_bullets.append({'x': x - 15, 'y': y})
+        enemy_bullets.append({'x': x + 15, 'y': y})
+    else:
+        enemy_bullets.append({'x': x, 'y': y})
 
 def fire_nuke(x,y):
     nukes.append({'x':x, 'y':y})
@@ -216,6 +225,7 @@ while running:
                     fire_player_bullet(playerX, playerY)
                 if event.key == pygame.K_UP:
                     if shield_charges > 0 and not shield_active:
+                        laser_sound.play()
                         shield_active = True
                         shield_timer = shield_duration
                         shield_charges -= 1
@@ -244,7 +254,7 @@ while running:
 
         # Speed Increase Timer
         speed_increase_timer -= 1
-        if speed_increase_timer <= 0 and speed_increases < 3:
+        if speed_increase_timer <= 0 and speed_increases < 4:
             for i in range(num_of_enemies):
                 if enemyX_change[i] > 0:
                     enemyX_change[i] += 0.5
@@ -262,8 +272,11 @@ while running:
             next_life_score += 1000
         if score_value >= next_500_point_reward:
             player_lives += 2
-            double_shot_unlocked = True
+            alien_double_shot_unlocked = True
             next_500_point_reward += 500
+        if score_value >= next_1000_point_reward:
+            player_double_shot_unlocked = True
+            next_1000_point_reward += 1000
 
 
         # Super Alien Logic
