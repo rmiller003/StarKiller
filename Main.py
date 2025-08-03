@@ -59,19 +59,24 @@ nukeImg = pygame.transform.scale(pygame.image.load('bullet.png'), (32, 32))
 nukes = []
 nukeY_change = 1 # Slower drop speed
 
-# Nuke Explosion
+# Explosions
 nuke_explosion_active = False
 nuke_explosion_timer = 0
 nuke_explosion_radius = 10
 nuke_explosion_x = 0
 nuke_explosion_y = 0
 
-# Player Explosion
 player_explosion_active = False
 player_explosion_timer = 0
 player_explosion_radius = 10
 player_explosion_x = 0
 player_explosion_y = 0
+
+super_alien_explosion_active = False
+super_alien_explosion_timer = 0
+super_alien_explosion_radius = 10
+super_alien_explosion_x = 0
+super_alien_explosion_y = 0
 
 
 # Player Bullet
@@ -87,7 +92,7 @@ enemy_bulletY_change = 4
 # Score
 score_value = 0
 next_shield_score = 20
-next_life_score = 200
+next_life_score = 1000
 font = pygame.font.Font('freesansbold.ttf', 33)
 ui_font = pygame.font.Font('freesansbold.ttf', 24)
 textX = 10
@@ -111,7 +116,7 @@ def reset_game():
     shield_timer = 0
     player_lives = 4
     next_shield_score = 20
-    next_life_score = 200
+    next_life_score = 1000
     super_alien_active = False
     super_alien_timer = random.randint(500, 1000)
     nuke_explosion_active = False
@@ -119,6 +124,7 @@ def reset_game():
     for i in range(num_of_enemies):
         enemyX[i] = random.randint(0, screen_width - 64)
         enemyY[i] = random.randint(50, 150)
+        enemyX_change[i] = 2.8812
 
 def show_score(x, y):
     score = font.render("Score :" + str(score_value), True, (0, 255, 0))
@@ -182,7 +188,7 @@ for i in range(num_of_enemies):
     enemyX.append(random.randint(0, screen_width - 64))
     enemyY.append(random.randint(50, 150))
     enemyX_change.append(2.8812)
-    enemyY_change.append(40)
+    enemyY_change.append(0.05) # Downward trend
 
 # Game Loop
 running = True
@@ -249,7 +255,7 @@ while running:
             next_shield_score += 20
         if score_value >= next_life_score:
             player_lives += 1
-            next_life_score += 200
+            next_life_score += 1000
 
         # Super Alien Logic
         if not super_alien_active:
@@ -270,6 +276,7 @@ while running:
 
         # Enemy Movement and Firing
         for i in range(num_of_enemies):
+            enemyY[i] += enemyY_change[i] # Downward trend
             if enemyY[i] > screen_height - 120:
                 player_lives = 0
                 game_state = "game_over"
@@ -292,7 +299,12 @@ while running:
             bullet['y'] -= player_bulletY_change
 
             # Super Alien Collision
-            if super_alien_active and isCollision(super_alienX, super_alienY, bullet['x'], bullet['y'], size=64):
+            if super_alien_active and isCollision(super_alienX + 64, super_alienY + 64, bullet['x'], bullet['y'], size=64):
+                super_alien_explosion_x = int(super_alienX + 64)
+                super_alien_explosion_y = int(super_alienY + 64)
+                super_alien_explosion_active = True
+                super_alien_explosion_timer = 40
+                super_alien_explosion_radius = 20
                 explosion_Sound = mixer.Sound('explosion.wav')
                 explosion_Sound.play()
                 player_bullets.remove(bullet)
@@ -391,6 +403,15 @@ while running:
                 playerY = screen_height - 100
         else:
             player(playerX, playerY)
+
+        # Super Alien Explosion
+        if super_alien_explosion_active:
+            if super_alien_explosion_timer > 0:
+                pygame.draw.circle(screen, (255, 255, 0), (super_alien_explosion_x, super_alien_explosion_y), super_alien_explosion_radius)
+                super_alien_explosion_radius += 10
+                super_alien_explosion_timer -= 1
+            else:
+                super_alien_explosion_active = False
 
         show_score(textX, textY)
         show_shield_charges(textX, textY + 40)
