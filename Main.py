@@ -47,7 +47,7 @@ num_of_enemies = 6
 speed_increase_timer = 600 # 10 seconds at 60 FPS
 
 # Super Alien
-super_alienImg = pygame.image.load('ufo.png')
+super_alienImg = pygame.transform.scale(pygame.image.load('ufo.png'), (128, 128))
 super_alien_active = False
 super_alien_timer = random.randint(500, 1000) # Time until first appearance
 super_alienX = 0
@@ -87,6 +87,7 @@ enemy_bulletY_change = 4
 # Score
 score_value = 0
 next_shield_score = 20
+next_life_score = 200
 font = pygame.font.Font('freesansbold.ttf', 33)
 ui_font = pygame.font.Font('freesansbold.ttf', 24)
 textX = 10
@@ -99,7 +100,7 @@ restart_font = pygame.font.Font('freesansbold.ttf', 20)
 game_state = "playing"
 
 def reset_game():
-    global playerX, playerY, score_value, player_bullets, enemy_bullets, shield_charges, shield_active, shield_timer, player_lives, next_shield_score, super_alien_active, super_alien_timer, nuke_explosion_active, speed_increase_timer
+    global playerX, playerY, score_value, player_bullets, enemy_bullets, shield_charges, shield_active, shield_timer, player_lives, next_shield_score, super_alien_active, super_alien_timer, nuke_explosion_active, speed_increase_timer, next_life_score
     playerX = (screen_width - player_width) / 2
     playerY = screen_height - 100
     score_value = 0
@@ -110,6 +111,7 @@ def reset_game():
     shield_timer = 0
     player_lives = 4
     next_shield_score = 20
+    next_life_score = 200
     super_alien_active = False
     super_alien_timer = random.randint(500, 1000)
     nuke_explosion_active = False
@@ -245,6 +247,9 @@ while running:
         if score_value >= next_shield_score:
             shield_charges += 1
             next_shield_score += 20
+        if score_value >= next_life_score:
+            player_lives += 1
+            next_life_score += 200
 
         # Super Alien Logic
         if not super_alien_active:
@@ -256,7 +261,7 @@ while running:
             super_alienX += super_alienX_change
             if super_alienX <= 0:
                 super_alienX_change = 2
-            elif super_alienX >= screen_width - 64:
+            elif super_alienX >= screen_width - 128:
                 super_alienX_change = -2
 
             super_alien(super_alienX, super_alienY)
@@ -286,6 +291,27 @@ while running:
             screen.blit(playerBulletImg, (bullet['x'] + 16, bullet['y'] + 10))
             bullet['y'] -= player_bulletY_change
 
+            # Super Alien Collision
+            if super_alien_active and isCollision(super_alienX, super_alienY, bullet['x'], bullet['y'], size=64):
+                explosion_Sound = mixer.Sound('explosion.wav')
+                explosion_Sound.play()
+                player_bullets.remove(bullet)
+                score_value += 100
+                super_alien_active = False
+                super_alien_timer = random.randint(1000, 2000)
+                continue
+
+            # Nuke Collision
+            for nuke in nukes[:]:
+                if isCollision(nuke['x'], nuke['y'], bullet['x'], bullet['y'], size=32):
+                    explosion_Sound = mixer.Sound('explosion.wav')
+                    explosion_Sound.play()
+                    player_bullets.remove(bullet)
+                    nukes.remove(nuke)
+                    score_value += 50
+                    break
+
+            # Enemy Collision
             for i in range(num_of_enemies):
                 if isCollision(enemyX[i], enemyY[i], bullet['x'], bullet['y']):
                     explosion_Sound = mixer.Sound('explosion.wav')
