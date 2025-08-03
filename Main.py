@@ -35,7 +35,7 @@ player_lives = 4
 shield_charges = 3
 shield_active = False
 shield_timer = 0
-shield_duration = 100 # Shield duration in frames
+shield_duration = 101 # Shield duration in frames
 
 # Enemy
 enemyImg = []
@@ -44,6 +44,18 @@ enemyY = []
 enemyX_change = []
 enemyY_change = []
 num_of_enemies = 6
+
+# Super Alien
+super_alienImg = pygame.image.load('ufo.png')
+super_alien_active = False
+super_alien_timer = random.randint(500, 1000) # Time until first appearance
+super_alienX = 0
+super_alienY = 20
+
+# Nuke
+nukeImg = pygame.transform.scale(pygame.image.load('bullet.png'), (32, 32))
+nukes = []
+nukeY_change = 2
 
 # Player Bullet
 playerBulletImg = pygame.image.load('bullet.png')
@@ -57,6 +69,7 @@ enemy_bulletY_change = 4
 
 # Score
 score_value = 0
+next_shield_score = 20
 font = pygame.font.Font('freesansbold.ttf', 33)
 ui_font = pygame.font.Font('freesansbold.ttf', 24)
 textX = 10
@@ -69,7 +82,7 @@ restart_font = pygame.font.Font('freesansbold.ttf', 20)
 game_state = "playing"
 
 def reset_game():
-    global playerX, playerY, score_value, player_bullets, enemy_bullets, shield_charges, shield_active, shield_timer, player_lives
+    global playerX, playerY, score_value, player_bullets, enemy_bullets, shield_charges, shield_active, shield_timer, player_lives, next_shield_score, super_alien_active, super_alien_timer
     playerX = (screen_width - player_width) / 2
     playerY = screen_height - 100
     score_value = 0
@@ -79,6 +92,9 @@ def reset_game():
     shield_active = False
     shield_timer = 0
     player_lives = 4
+    next_shield_score = 20
+    super_alien_active = False
+    super_alien_timer = random.randint(500, 1000)
     for i in range(num_of_enemies):
         enemyX[i] = random.randint(0, screen_width - 64)
         enemyY[i] = random.randint(50, 150)
@@ -108,6 +124,8 @@ def player(x, y):
     if shield_active:
         pygame.draw.circle(screen, (0, 255, 255, 100), (int(x + player_width/2), int(y + player_width/2)), 40, 2)
 
+def super_alien(x,y):
+    screen.blit(super_alienImg, (x,y))
 
 def enemy(x, y, i):
     screen.blit(enemyImg[i], (x, y))
@@ -118,9 +136,12 @@ def fire_player_bullet(x, y):
 def fire_enemy_bullet(x, y):
     enemy_bullets.append({'x': x, 'y': y})
 
-def isCollision(obj1X, obj1Y, obj2X, obj2Y):
+def fire_nuke(x,y):
+    nukes.append({'x':x, 'y':y})
+
+def isCollision(obj1X, obj1Y, obj2X, obj2Y, size=27):
     distance = math.sqrt((math.pow(obj1X - obj2X, 2)) + (math.pow(obj1Y - obj2Y, 2)))
-    if distance < 27:
+    if distance < size:
         return True
     else:
         return False
@@ -181,6 +202,22 @@ while running:
             if shield_timer <= 0:
                 shield_active = False
 
+        # Score-based rewards
+        if score_value >= next_shield_score:
+            shield_charges += 1
+            next_shield_score += 20
+
+        # Super Alien Logic
+        if not super_alien_active:
+            super_alien_timer -= 1
+            if super_alien_timer <= 0:
+                super_alien_active = True
+                super_alienX = random.randint(0, screen_width - 64)
+        else:
+            super_alien(super_alienX, super_alienY)
+            if random.randint(0, 100) < 1:
+                fire_nuke(super_alienX, super_alienY)
+
         # Enemy Movement and Firing
         for i in range(num_of_enemies):
             if enemyY[i] > screen_height - 120:
@@ -228,7 +265,6 @@ while running:
             screen.blit(enemyBulletImg, (bullet['x'] + 16, bullet['y'] + 10))
             bullet['y'] += enemy_bulletY_change
 
-            # Player Collision
             if isCollision(playerX, playerY, bullet['x'], bullet['y']):
                 if shield_active:
                     enemy_bullets.remove(bullet)
@@ -250,7 +286,20 @@ while running:
                 except ValueError:
                     pass
 
-        if game_state == "game_over": # break out of player/enemy updates
+        # Nuke Movement and Collision
+        for nuke in nukes[:]:
+            screen.blit(nukeImg, (nuke['x'] + 16, nuke['y'] + 10))
+            nuke['y'] += nukeY_change
+            if isCollision(playerX, playerY, nuke['x'], nuke['y'], size=35):
+                game_state = "game_over"
+                break
+            if nuke['y'] > screen_height:
+                try:
+                    nukes.remove(nuke)
+                except ValueError:
+                    pass
+
+        if game_state == "game_over":
             continue
 
         player(playerX, playerY)
