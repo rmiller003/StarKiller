@@ -44,6 +44,7 @@ enemyY = []
 enemyX_change = []
 enemyY_change = []
 num_of_enemies = 6
+speed_increase_timer = 600 # 10 seconds at 60 FPS
 
 # Super Alien
 super_alienImg = pygame.image.load('ufo.png')
@@ -58,12 +59,20 @@ nukeImg = pygame.transform.scale(pygame.image.load('bullet.png'), (32, 32))
 nukes = []
 nukeY_change = 1 # Slower drop speed
 
-# Explosion
-explosion_active = False
-explosion_timer = 0
-explosion_radius = 10
-explosion_x = 0
-explosion_y = 0
+# Nuke Explosion
+nuke_explosion_active = False
+nuke_explosion_timer = 0
+nuke_explosion_radius = 10
+nuke_explosion_x = 0
+nuke_explosion_y = 0
+
+# Player Explosion
+player_explosion_active = False
+player_explosion_timer = 0
+player_explosion_radius = 10
+player_explosion_x = 0
+player_explosion_y = 0
+
 
 # Player Bullet
 playerBulletImg = pygame.image.load('bullet.png')
@@ -90,7 +99,7 @@ restart_font = pygame.font.Font('freesansbold.ttf', 20)
 game_state = "playing"
 
 def reset_game():
-    global playerX, playerY, score_value, player_bullets, enemy_bullets, shield_charges, shield_active, shield_timer, player_lives, next_shield_score, super_alien_active, super_alien_timer, explosion_active
+    global playerX, playerY, score_value, player_bullets, enemy_bullets, shield_charges, shield_active, shield_timer, player_lives, next_shield_score, super_alien_active, super_alien_timer, nuke_explosion_active, speed_increase_timer
     playerX = (screen_width - player_width) / 2
     playerY = screen_height - 100
     score_value = 0
@@ -103,7 +112,8 @@ def reset_game():
     next_shield_score = 20
     super_alien_active = False
     super_alien_timer = random.randint(500, 1000)
-    explosion_active = False
+    nuke_explosion_active = False
+    speed_increase_timer = 600
     for i in range(num_of_enemies):
         enemyX[i] = random.randint(0, screen_width - 64)
         enemyY[i] = random.randint(50, 150)
@@ -121,14 +131,14 @@ def show_lives(x, y):
     screen.blit(lives_text, (x, y))
 
 def game_over_screen():
-    global explosion_active, explosion_timer, explosion_radius, explosion_x, explosion_y
-    if explosion_active:
-        if explosion_timer > 0:
-            pygame.draw.circle(screen, (255, 165, 0), (explosion_x, explosion_y), explosion_radius)
-            explosion_radius += 5
-            explosion_timer -= 1
+    global nuke_explosion_active, nuke_explosion_timer, nuke_explosion_radius, nuke_explosion_x, nuke_explosion_y
+    if nuke_explosion_active:
+        if nuke_explosion_timer > 0:
+            pygame.draw.circle(screen, (255, 165, 0), (nuke_explosion_x, nuke_explosion_y), nuke_explosion_radius)
+            nuke_explosion_radius += 5
+            nuke_explosion_timer -= 1
         else:
-            explosion_active = False
+            nuke_explosion_active = False
     else:
         over_text = over_font.render("GAME OVER LOSER!!!", True, (0, 255, 0))
         restart_text = restart_font.render("Press R to Restart", True, (255, 255, 255))
@@ -198,7 +208,7 @@ while running:
                         shield_timer = shield_duration
                         shield_charges -= 1
             if game_state == "game_over":
-                if event.key == pygame.K_r:
+                if event.key == pygame.K_r and not nuke_explosion_active:
                     reset_game()
                     game_state = "playing"
 
@@ -208,17 +218,28 @@ while running:
 
     if game_state == "playing":
         # Player Movement
-        playerX += playerX_change
-        if playerX <= 0:
-            playerX = 0
-        elif playerX >= screen_width - player_width:
-            playerX = screen_width - player_width
+        if not player_explosion_active:
+            playerX += playerX_change
+            if playerX <= 0:
+                playerX = 0
+            elif playerX >= screen_width - player_width:
+                playerX = screen_width - player_width
 
         # Shield Timer
         if shield_active:
             shield_timer -= 1
             if shield_timer <= 0:
                 shield_active = False
+
+        # Speed Increase Timer
+        speed_increase_timer -= 1
+        if speed_increase_timer <= 0:
+            for i in range(num_of_enemies):
+                if enemyX_change[i] > 0:
+                    enemyX_change[i] += 0.5
+                else:
+                    enemyX_change[i] -= 0.5
+            speed_increase_timer = 600
 
         # Score-based rewards
         if score_value >= next_shield_score:
@@ -251,11 +272,9 @@ while running:
 
             enemyX[i] += enemyX_change[i]
             if enemyX[i] <= 0:
-                enemyX_change[i] = 2.8812
-                enemyY[i] += enemyY_change[i]
+                enemyX_change[i] = abs(enemyX_change[i])
             elif enemyX[i] >= screen_width - 64:
-                enemyX_change[i] = -2.8812
-                enemyY[i] += enemyY_change[i]
+                enemyX_change[i] = -abs(enemyX_change[i])
 
             if random.randint(0, 200) < 1:
                 fire_enemy_bullet(enemyX[i], enemyY[i])
@@ -299,8 +318,12 @@ while running:
                     if player_lives <= 0:
                         game_state = "game_over"
                     else:
-                        playerX = (screen_width - player_width) / 2
-                        playerY = screen_height - 100
+                        player_explosion_x = int(playerX + player_width/2)
+                        player_explosion_y = int(playerY + player_width/2)
+                        player_explosion_active = True
+                        player_explosion_timer = 20
+                        player_explosion_radius = 10
+                        playerX = -2000 # Move player off screen during explosion
                 break
 
             if bullet['y'] > screen_height:
@@ -314,11 +337,11 @@ while running:
             screen.blit(nukeImg, (nuke['x'] + 16, nuke['y'] + 10))
             nuke['y'] += nukeY_change
             if isCollision(playerX, playerY, nuke['x'], nuke['y'], size=35):
-                explosion_x = int(playerX + player_width/2)
-                explosion_y = int(playerY + player_width/2)
-                explosion_active = True
-                explosion_timer = 30
-                explosion_radius = 10
+                nuke_explosion_x = int(playerX + player_width/2)
+                nuke_explosion_y = int(playerY + player_width/2)
+                nuke_explosion_active = True
+                nuke_explosion_timer = 30
+                nuke_explosion_radius = 10
                 game_state = "game_over"
                 break
             if nuke['y'] > screen_height:
@@ -327,10 +350,22 @@ while running:
                 except ValueError:
                     pass
 
-        if game_state == "game_over" and not explosion_active:
+        if game_state == "game_over" and not nuke_explosion_active:
             continue
 
-        player(playerX, playerY)
+        # Player Explosion
+        if player_explosion_active:
+            if player_explosion_timer > 0:
+                pygame.draw.circle(screen, (255, 0, 0), (player_explosion_x, player_explosion_y), player_explosion_radius)
+                player_explosion_radius += 3
+                player_explosion_timer -= 1
+            else:
+                player_explosion_active = False
+                playerX = (screen_width - player_width) / 2
+                playerY = screen_height - 100
+        else:
+            player(playerX, playerY)
+
         show_score(textX, textY)
         show_shield_charges(textX, textY + 40)
         show_lives(screen_width - 120, textY)
