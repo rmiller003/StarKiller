@@ -30,6 +30,7 @@ player_width = 64
 playerX = (screen_width - player_width) / 2
 playerY = screen_height - 100
 playerX_change = 0
+player_lives = 4
 shield_charges = 3
 shield_active = False
 shield_timer = 0
@@ -56,7 +57,7 @@ enemy_bulletY_change = 4
 # Score
 score_value = 0
 font = pygame.font.Font('freesansbold.ttf', 33)
-shield_font = pygame.font.Font('freesansbold.ttf', 24)
+ui_font = pygame.font.Font('freesansbold.ttf', 24)
 textX = 10
 textY = 10
 
@@ -67,7 +68,7 @@ restart_font = pygame.font.Font('freesansbold.ttf', 20)
 game_state = "playing"
 
 def reset_game():
-    global playerX, playerY, score_value, player_bullets, enemy_bullets, shield_charges, shield_active, shield_timer
+    global playerX, playerY, score_value, player_bullets, enemy_bullets, shield_charges, shield_active, shield_timer, player_lives
     playerX = (screen_width - player_width) / 2
     playerY = screen_height - 100
     score_value = 0
@@ -76,6 +77,7 @@ def reset_game():
     shield_charges = 3
     shield_active = False
     shield_timer = 0
+    player_lives = 4
     for i in range(num_of_enemies):
         enemyX[i] = random.randint(0, screen_width - 64)
         enemyY[i] = random.randint(50, 150)
@@ -85,8 +87,12 @@ def show_score(x, y):
     screen.blit(score, (x, y))
 
 def show_shield_charges(x, y):
-    shields_text = shield_font.render("Shields: " + str(shield_charges), True, (0, 255, 255))
+    shields_text = ui_font.render("Shields: " + str(shield_charges), True, (0, 255, 255))
     screen.blit(shields_text, (x, y))
+
+def show_lives(x, y):
+    lives_text = ui_font.render("Lives: " + str(player_lives), True, (255, 255, 255))
+    screen.blit(lives_text, (x, y))
 
 def game_over_text():
     over_text = over_font.render("GAME OVER LOSER!!!", True, (0, 255, 0))
@@ -177,6 +183,7 @@ while running:
         # Enemy Movement and Firing
         for i in range(num_of_enemies):
             if enemyY[i] > screen_height - 120:
+                player_lives = 0 # Game over if enemies reach the bottom
                 game_state = "game_over"
                 break
 
@@ -227,7 +234,13 @@ while running:
                 else:
                     explosion_Sound = mixer.Sound('explosion.wav')
                     explosion_Sound.play()
-                    game_state = "game_over"
+                    player_lives -= 1
+                    enemy_bullets.remove(bullet)
+                    if player_lives <= 0:
+                        game_state = "game_over"
+                    else:
+                        playerX = (screen_width - player_width) / 2
+                        playerY = screen_height - 100
                 break
 
             if bullet['y'] > screen_height:
@@ -242,6 +255,7 @@ while running:
         player(playerX, playerY)
         show_score(textX, textY)
         show_shield_charges(textX, textY + 40)
+        show_lives(screen_width - 120, textY)
 
     elif game_state == "game_over":
         game_over_text()
