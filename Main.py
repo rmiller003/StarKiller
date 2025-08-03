@@ -90,7 +90,7 @@ def fire_bullet(x, y):
 
 
 def isCollision(enemyX, enemyY, bulletX, bulletY):
-    distance = math.sqrt((math.pow(enemyX - bulletY, 2)) + (math.pow(enemyY - bulletY, 2)))
+    distance = math.sqrt((math.pow(enemyX - bulletX, 2)) + (math.pow(enemyY - bulletY, 2)))
     if distance < 27:
         return True
     else:
@@ -116,7 +116,7 @@ while running:
         if event.key == pygame.K_RIGHT:
             playerX_change = 5
         if event.key == pygame.K_SPACE:
-            if bullet_state is "ready":
+            if bullet_state == "ready":
                 # Get the current x coordinate of the spaceship
                 bulletX = playerX
                 fire_bullet(playerX, playerY)
@@ -168,7 +168,7 @@ while running:
         bullet_state = "ready"
         bullet_Sound = mixer.Sound('laser.wav')
         bullet_Sound.play()
-    if bullet_state is "fire":
+    if bullet_state == "fire":
         fire_bullet(bulletX, bulletY)
         bulletY -= bulletY_change
 
