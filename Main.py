@@ -51,11 +51,19 @@ super_alien_active = False
 super_alien_timer = random.randint(500, 1000) # Time until first appearance
 super_alienX = 0
 super_alienY = 20
+super_alienX_change = 2
 
 # Nuke
 nukeImg = pygame.transform.scale(pygame.image.load('bullet.png'), (32, 32))
 nukes = []
-nukeY_change = 2
+nukeY_change = 1 # Slower drop speed
+
+# Explosion
+explosion_active = False
+explosion_timer = 0
+explosion_radius = 10
+explosion_x = 0
+explosion_y = 0
 
 # Player Bullet
 playerBulletImg = pygame.image.load('bullet.png')
@@ -82,7 +90,7 @@ restart_font = pygame.font.Font('freesansbold.ttf', 20)
 game_state = "playing"
 
 def reset_game():
-    global playerX, playerY, score_value, player_bullets, enemy_bullets, shield_charges, shield_active, shield_timer, player_lives, next_shield_score, super_alien_active, super_alien_timer
+    global playerX, playerY, score_value, player_bullets, enemy_bullets, shield_charges, shield_active, shield_timer, player_lives, next_shield_score, super_alien_active, super_alien_timer, explosion_active
     playerX = (screen_width - player_width) / 2
     playerY = screen_height - 100
     score_value = 0
@@ -95,6 +103,7 @@ def reset_game():
     next_shield_score = 20
     super_alien_active = False
     super_alien_timer = random.randint(500, 1000)
+    explosion_active = False
     for i in range(num_of_enemies):
         enemyX[i] = random.randint(0, screen_width - 64)
         enemyY[i] = random.randint(50, 150)
@@ -111,13 +120,22 @@ def show_lives(x, y):
     lives_text = ui_font.render("Lives: " + str(player_lives), True, (255, 255, 255))
     screen.blit(lives_text, (x, y))
 
-def game_over_text():
-    over_text = over_font.render("GAME OVER LOSER!!!", True, (0, 255, 0))
-    restart_text = restart_font.render("Press R to Restart", True, (255, 255, 255))
-    over_text_rect = over_text.get_rect(center=(screen_width/2, screen_height/2 - 50))
-    restart_text_rect = restart_text.get_rect(center=(screen_width/2, screen_height/2))
-    screen.blit(over_text, over_text_rect)
-    screen.blit(restart_text, restart_text_rect)
+def game_over_screen():
+    global explosion_active, explosion_timer, explosion_radius, explosion_x, explosion_y
+    if explosion_active:
+        if explosion_timer > 0:
+            pygame.draw.circle(screen, (255, 165, 0), (explosion_x, explosion_y), explosion_radius)
+            explosion_radius += 5
+            explosion_timer -= 1
+        else:
+            explosion_active = False
+    else:
+        over_text = over_font.render("GAME OVER LOSER!!!", True, (0, 255, 0))
+        restart_text = restart_font.render("Press R to Restart", True, (255, 255, 255))
+        over_text_rect = over_text.get_rect(center=(screen_width/2, screen_height/2 - 50))
+        restart_text_rect = restart_text.get_rect(center=(screen_width/2, screen_height/2))
+        screen.blit(over_text, over_text_rect)
+        screen.blit(restart_text, restart_text_rect)
 
 def player(x, y):
     screen.blit(playerImg, (x, y))
@@ -180,7 +198,7 @@ while running:
                         shield_timer = shield_duration
                         shield_charges -= 1
             if game_state == "game_over":
-                if event.key == pygame.K_r:
+                if event.key == pygame.K_r and not explosion_active:
                     reset_game()
                     game_state = "playing"
 
@@ -212,8 +230,14 @@ while running:
             super_alien_timer -= 1
             if super_alien_timer <= 0:
                 super_alien_active = True
-                super_alienX = random.randint(0, screen_width - 64)
+                super_alienX = 0
         else:
+            super_alienX += super_alienX_change
+            if super_alienX <= 0:
+                super_alienX_change = 2
+            elif super_alienX >= screen_width - 64:
+                super_alienX_change = -2
+
             super_alien(super_alienX, super_alienY)
             if random.randint(0, 100) < 1:
                 fire_nuke(super_alienX, super_alienY)
@@ -221,7 +245,7 @@ while running:
         # Enemy Movement and Firing
         for i in range(num_of_enemies):
             if enemyY[i] > screen_height - 120:
-                player_lives = 0 # Game over if enemies reach the bottom
+                player_lives = 0
                 game_state = "game_over"
                 break
 
@@ -233,7 +257,6 @@ while running:
                 enemyX_change[i] = -2.8812
                 enemyY[i] += enemyY_change[i]
 
-            # Enemy Firing
             if random.randint(0, 200) < 1:
                 fire_enemy_bullet(enemyX[i], enemyY[i])
 
@@ -291,6 +314,11 @@ while running:
             screen.blit(nukeImg, (nuke['x'] + 16, nuke['y'] + 10))
             nuke['y'] += nukeY_change
             if isCollision(playerX, playerY, nuke['x'], nuke['y'], size=35):
+                explosion_x = int(playerX + player_width/2)
+                explosion_y = int(playerY + player_width/2)
+                explosion_active = True
+                explosion_timer = 30
+                explosion_radius = 10
                 game_state = "game_over"
                 break
             if nuke['y'] > screen_height:
@@ -299,7 +327,7 @@ while running:
                 except ValueError:
                     pass
 
-        if game_state == "game_over":
+        if game_state == "game_over" and not explosion_active:
             continue
 
         player(playerX, playerY)
@@ -308,6 +336,6 @@ while running:
         show_lives(screen_width - 120, textY)
 
     elif game_state == "game_over":
-        game_over_text()
+        game_over_screen()
 
     pygame.display.update()
