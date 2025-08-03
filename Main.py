@@ -35,7 +35,7 @@ player_lives = 4
 shield_charges = 3
 shield_active = False
 shield_timer = 0
-shield_duration = 101 # Shield duration in frames
+shield_duration = 202 # Shield duration in frames
 double_shot_unlocked = False
 
 # Enemy
