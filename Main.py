@@ -36,6 +36,7 @@ shield_charges = 3
 shield_active = False
 shield_timer = 0
 shield_duration = 101 # Shield duration in frames
+double_shot_unlocked = False
 
 # Enemy
 enemyImg = []
@@ -81,6 +82,7 @@ enemy_bulletY_change = 4
 score_value = 0
 next_shield_score = 20
 next_life_score = 1000
+next_500_point_reward = 500
 font = pygame.font.Font('freesansbold.ttf', 33)
 ui_font = pygame.font.Font('freesansbold.ttf', 24)
 textX = 10
@@ -93,7 +95,7 @@ restart_font = pygame.font.Font('freesansbold.ttf', 20)
 game_state = "playing"
 
 def reset_game():
-    global playerX, playerY, score_value, player_bullets, enemy_bullets, shield_charges, shield_active, shield_timer, player_lives, next_shield_score, super_alien_active, super_alien_timer, speed_increase_timer, next_life_score, explosions, horizontal_passes
+    global playerX, playerY, score_value, player_bullets, enemy_bullets, shield_charges, shield_active, shield_timer, player_lives, next_shield_score, super_alien_active, super_alien_timer, speed_increase_timer, next_life_score, explosions, horizontal_passes, double_shot_unlocked, next_500_point_reward
     playerX = (screen_width - player_width) / 2
     playerY = screen_height - 100
     score_value = 0
@@ -106,6 +108,8 @@ def reset_game():
     player_lives = 4
     next_shield_score = 20
     next_life_score = 1000
+    next_500_point_reward = 500
+    double_shot_unlocked = False
     super_alien_active = False
     super_alien_timer = random.randint(500, 1000)
     speed_increase_timer = 600
@@ -153,7 +157,12 @@ def enemy(x, y, i):
     screen.blit(enemyImg[i], (x, y))
 
 def fire_player_bullet(x, y):
-    player_bullets.append({'x': x, 'y': y})
+    if double_shot_unlocked:
+        player_bullets.append({'x': x - 15, 'y': y})
+        player_bullets.append({'x': x + 15, 'y': y})
+    else:
+        player_bullets.append({'x': x, 'y': y})
+
 
 def fire_enemy_bullet(x, y):
     enemy_bullets.append({'x': x, 'y': y})
@@ -243,6 +252,11 @@ while running:
         if score_value >= next_life_score:
             player_lives += 1
             next_life_score += 1000
+        if score_value >= next_500_point_reward:
+            player_lives += 2
+            double_shot_unlocked = True
+            next_500_point_reward += 500
+
 
         # Super Alien Logic
         if not super_alien_active:
@@ -287,7 +301,7 @@ while running:
 
         # Player Bullet Movement and Collision
         for bullet in player_bullets[:]:
-            screen.blit(playerBulletImg, (bullet['x'] + 16, bullet['y'] + 10))
+            screen.blit(playerBulletImg, (bullet['x'], bullet['y']))
             bullet['y'] -= player_bulletY_change
 
             # Super Alien Collision
