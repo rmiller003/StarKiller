@@ -8,7 +8,9 @@ from pygame import mixer
 pygame.init()
 
 # create a screen
-screen = pygame.display.set_mode((800, 600))
+screen_width = 1024
+screen_height = 768
+screen = pygame.display.set_mode((screen_width, screen_height))
 
 # Game Background
 background = pygame.image.load('StarBK.png')
@@ -24,8 +26,9 @@ pygame.display.set_icon(icon)
 
 # player
 playerImg = pygame.image.load('starship.png')
-playerX = 370
-playerY = 480
+player_width = 64
+playerX = (screen_width - player_width) / 2
+playerY = screen_height - 100
 playerX_change = 0
 
 # Enemy
@@ -60,13 +63,13 @@ game_state = "playing"
 
 def reset_game():
     global playerX, playerY, score_value, player_bullets, enemy_bullets
-    playerX = 370
-    playerY = 480
+    playerX = (screen_width - player_width) / 2
+    playerY = screen_height - 100
     score_value = 0
     player_bullets = []
     enemy_bullets = []
     for i in range(num_of_enemies):
-        enemyX[i] = random.randint(0, 735)
+        enemyX[i] = random.randint(0, screen_width - 64)
         enemyY[i] = random.randint(50, 150)
 
 def show_score(x, y):
@@ -76,8 +79,10 @@ def show_score(x, y):
 def game_over_text():
     over_text = over_font.render("GAME OVER LOSER!!!", True, (0, 255, 0))
     restart_text = restart_font.render("Press R to Restart", True, (255, 255, 255))
-    screen.blit(over_text, (200, 250))
-    screen.blit(restart_text, (300, 320))
+    over_text_rect = over_text.get_rect(center=(screen_width/2, screen_height/2 - 50))
+    restart_text_rect = restart_text.get_rect(center=(screen_width/2, screen_height/2))
+    screen.blit(over_text, over_text_rect)
+    screen.blit(restart_text, restart_text_rect)
 
 def player(x, y):
     screen.blit(playerImg, (x, y))
@@ -101,9 +106,9 @@ def isCollision(obj1X, obj1Y, obj2X, obj2Y):
 # Initialize enemies
 for i in range(num_of_enemies):
     enemyImg.append(pygame.image.load('alien.png'))
-    enemyX.append(random.randint(0, 735))
+    enemyX.append(random.randint(0, screen_width - 64))
     enemyY.append(random.randint(50, 150))
-    enemyX_change.append(3)
+    enemyX_change.append(2.94)
     enemyY_change.append(40)
 
 # Game Loop
@@ -140,21 +145,21 @@ while running:
         playerX += playerX_change
         if playerX <= 0:
             playerX = 0
-        elif playerX >= 736:
-            playerX = 736
+        elif playerX >= screen_width - player_width:
+            playerX = screen_width - player_width
 
         # Enemy Movement and Firing
         for i in range(num_of_enemies):
-            if enemyY[i] > 440:
+            if enemyY[i] > screen_height - 120:
                 game_state = "game_over"
                 break
 
             enemyX[i] += enemyX_change[i]
             if enemyX[i] <= 0:
-                enemyX_change[i] = 3
+                enemyX_change[i] = 2.94
                 enemyY[i] += enemyY_change[i]
-            elif enemyX[i] >= 736:
-                enemyX_change[i] = -3
+            elif enemyX[i] >= screen_width - 64:
+                enemyX_change[i] = -2.94
                 enemyY[i] += enemyY_change[i]
 
             # Enemy Firing
@@ -174,7 +179,7 @@ while running:
                     explosion_Sound.play()
                     player_bullets.remove(bullet)
                     score_value += 1
-                    enemyX[i] = random.randint(0, 736)
+                    enemyX[i] = random.randint(0, screen_width - 64)
                     enemyY[i] = random.randint(50, 150)
                     break
 
@@ -196,7 +201,7 @@ while running:
                 game_state = "game_over"
                 break
 
-            if bullet['y'] > 600:
+            if bullet['y'] > screen_height:
                 try:
                     enemy_bullets.remove(bullet)
                 except ValueError:
