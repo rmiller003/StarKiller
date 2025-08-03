@@ -44,6 +44,7 @@ enemyY = []
 enemyX_change = []
 num_of_enemies = 6
 speed_increase_timer = 600 # 10 seconds at 60 FPS
+horizontal_passes = 0
 
 # Super Alien
 super_alienImg = pygame.transform.scale(pygame.image.load('ufo.png'), (128, 128))
@@ -92,7 +93,7 @@ restart_font = pygame.font.Font('freesansbold.ttf', 20)
 game_state = "playing"
 
 def reset_game():
-    global playerX, playerY, score_value, player_bullets, enemy_bullets, shield_charges, shield_active, shield_timer, player_lives, next_shield_score, super_alien_active, super_alien_timer, speed_increase_timer, next_life_score, explosions
+    global playerX, playerY, score_value, player_bullets, enemy_bullets, shield_charges, shield_active, shield_timer, player_lives, next_shield_score, super_alien_active, super_alien_timer, speed_increase_timer, next_life_score, explosions, horizontal_passes
     playerX = (screen_width - player_width) / 2
     playerY = screen_height - 100
     score_value = 0
@@ -108,6 +109,7 @@ def reset_game():
     super_alien_active = False
     super_alien_timer = random.randint(500, 1000)
     speed_increase_timer = 600
+    horizontal_passes = 0
     for i in range(num_of_enemies):
         enemyX[i] = random.randint(0, screen_width - 64)
         enemyY[i] = random.randint(50, 150)
@@ -263,8 +265,10 @@ while running:
             enemyX[i] += enemyX_change[i]
             if enemyX[i] <= 0 or enemyX[i] >= screen_width - 64:
                 enemyX_change[i] *= -1
-                for j in range(num_of_enemies):
-                    enemyY[j] += 40
+                horizontal_passes += 1
+                if horizontal_passes % 2 == 0:
+                    for j in range(num_of_enemies):
+                        enemyY[j] += 40
 
             if random.randint(0, 200) < 1:
                 fire_enemy_bullet(enemyX[i], enemyY[i])
