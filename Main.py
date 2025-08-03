@@ -127,13 +127,19 @@ def show_lives(x, y):
     lives_text = ui_font.render("Lives: " + str(player_lives), True, (255, 255, 255))
     screen.blit(lives_text, (x, y))
 
-def game_over_screen():
-    over_text = over_font.render("GAME OVER LOSER!!!", True, (0, 255, 0))
+def game_over_screen(final_score):
+    over_text = over_font.render("GAME OVER", True, (255, 255, 255))
+    score_text = font.render("Final Score: " + str(final_score), True, (255, 255, 255))
     restart_text = restart_font.render("Press R to Restart", True, (255, 255, 255))
-    over_text_rect = over_text.get_rect(center=(screen_width/2, screen_height/2 - 50))
-    restart_text_rect = restart_text.get_rect(center=(screen_width/2, screen_height/2))
+
+    over_text_rect = over_text.get_rect(center=(screen_width/2, screen_height/2 - 100))
+    score_text_rect = score_text.get_rect(center=(screen_width/2, screen_height/2))
+    restart_text_rect = restart_text.get_rect(center=(screen_width/2, screen_height/2 + 50))
+
     screen.blit(over_text, over_text_rect)
+    screen.blit(score_text, score_text_rect)
     screen.blit(restart_text, restart_text_rect)
+
 
 def player(x, y):
     screen.blit(playerImg, (x, y))
@@ -156,7 +162,7 @@ def fire_nuke(x,y):
     nukes.append({'x':x, 'y':y})
 
 def start_explosion(x, y, radius, duration, color):
-    explosions.append({'x': x, 'y': y, 'radius': radius, 'timer': duration, 'color': color, 'max_radius': radius * 5})
+    explosions.append({'x': x, 'y': y, 'radius': radius, 'timer': duration, 'color': color})
 
 def isCollision(obj1X, obj1Y, obj2X, obj2Y, size=27):
     distance = math.sqrt((math.pow(obj1X - obj2X, 2)) + (math.pow(obj1Y - obj2Y, 2)))
@@ -257,9 +263,13 @@ while running:
 
         # Enemy Movement and Firing
         for i in range(num_of_enemies):
-            if enemyY[i] > screen_height - 120:
-                player_lives = 0
-                game_state = "game_over"
+            if enemyY[i] > screen_height:
+                player_lives -= 1
+                if player_lives <= 0:
+                    game_state = "game_over"
+                else:
+                    enemyX[i] = random.randint(0, screen_width - 64)
+                    enemyY[i] = random.randint(50, 150)
                 break
 
             enemyX[i] += enemyX_change[i]
@@ -356,6 +366,10 @@ while running:
                 game_state = "game_over"
                 break
             if nuke['y'] > screen_height:
+                start_explosion(nuke['x'], screen_height, 40, 40, (255, 165, 0))
+                explosion_Sound = mixer.Sound('explosion.wav')
+                explosion_Sound.play()
+                score_value -= 100
                 try:
                     nukes.remove(nuke)
                 except ValueError:
@@ -379,6 +393,6 @@ while running:
         show_lives(screen_width - 120, textY)
 
     elif game_state == "game_over":
-        game_over_screen()
+        game_over_screen(score_value)
 
     pygame.display.update()
