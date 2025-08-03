@@ -198,7 +198,7 @@ while running:
                         shield_timer = shield_duration
                         shield_charges -= 1
             if game_state == "game_over":
-                if event.key == pygame.K_r and not explosion_active:
+                if event.key == pygame.K_r:
                     reset_game()
                     game_state = "playing"
 
