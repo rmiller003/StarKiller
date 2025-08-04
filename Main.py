@@ -56,7 +56,7 @@ super_alien_active = False
 super_alien_timer = random.randint(500, 1000) # Time until first appearance
 super_alienX = 0
 super_alienY = 20
-super_alienX_change = 2
+super_alienX_change = 4
 
 # Nuke
 nuke_base_img = pygame.image.load('bullet.png')
@@ -288,9 +288,9 @@ while running:
         else:
             super_alienX += super_alienX_change
             if super_alienX <= 0:
-                super_alienX_change = 2
+                super_alienX_change = 4
             elif super_alienX >= screen_width - 128:
-                super_alienX_change = -2
+                super_alienX_change = -4
 
             super_alien(super_alienX, super_alienY)
             if random.randint(0, 100) < 1:
