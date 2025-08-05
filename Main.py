@@ -25,7 +25,7 @@ screen_height = 768
 screen = pygame.display.set_mode((screen_width, screen_height))
 
 # Game Background
-bbackground = pygame.image.load("StarBK.png")
+background = pygame.image.load("StarBK.png")
 background = pygame.transform.scale(background, (screen_width, screen_height))
 
 
