@@ -25,8 +25,9 @@ screen_height = 768
 screen = pygame.display.set_mode((screen_width, screen_height))
 
 # Game Background
-background_image = pygame.image.load(resource_path("StarBK.png"))
-background_image = pygame.transform.scale(background, (screen_width, screen_height))
+bbackground = pygame.image.load("StarBK.png")
+background = pygame.transform.scale(background, (screen_width, screen_height))
+
 
 # Background Sound
 mixer.music.load('00_Race_Gamer_Soundtrack_136BPM.wav')
