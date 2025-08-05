@@ -3,6 +3,18 @@ import random
 import math
 
 from pygame import mixer
+import sys
+import os
+
+def resource_path(relative_path):
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 
 # intialize the pygame
 pygame.init()
@@ -13,7 +25,7 @@ screen_height = 768
 screen = pygame.display.set_mode((screen_width, screen_height))
 
 # Game Background
-background = pygame.image.load('StarBK.png')
+background_image = pygame.image.load(resource_path("StarBK.png"))
 background = pygame.transform.scale(background, (screen_width, screen_height))
 
 # Background Sound
